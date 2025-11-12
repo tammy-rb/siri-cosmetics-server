@@ -1,0 +1,56 @@
+import express from 'express';
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import { requestLogger, errorHandler } from './routesmiddlewear/middleware.js';
+import productRoutes from './routes/product.routes.js';
+
+
+// Initialize express app
+const app = express();
+
+//make possible to send files from server in folder public
+app.use(express.static('public'));
+
+// Enable CORS for only the website client at http://localhost:3000
+const corsOptions = {
+    origin: ["http://localhost:3000"],
+    credentials: true,
+};
+app.use(cors(corsOptions));
+
+// Middleware to parse JSON bodies and URL-encoded data
+const jsonParser = bodyParser.json();
+const urlencodedParser = bodyParser.urlencoded({ extended: true });
+
+app.use(jsonParser);
+app.use(urlencodedParser);
+
+// Use request logging middleware
+app.use(requestLogger);
+
+// Use routes
+app.use('/api/products', productRoutes);
+
+// Define homepage route for Siri Cosmetics
+app.get("/", (req, res) => {
+    res.json({
+        message: "Welcome to Siri Cosmetics API",
+        description: "Professional cosmetics clinic platform",
+        services: [
+            "Beauty product browsing and purchasing",
+            "Appointment booking for treatments",
+            "Personal account management",
+            "AI-powered beauty advice"
+        ],
+        endpoints: {
+            products: "/api/products",
+        },
+        version: "1.0.0"
+    });
+});
+
+// Set port and listen for requests
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}.`);
+});
