@@ -1,36 +1,46 @@
 // Data Layer for Product operations
 // This will contain database operations and data access logic
+import mongoose from "mongoose";
 
 class ProductDL {
+
+    static productSchema = new mongoose.Schema({
+        name: { type: String, required: true },
+        price: { type: Number, required: true },
+        description: String,
+        imageUrl: String,
+        inStock: { type: Number, default: 0 }
+    }, { timestamps: true });
+
+    static Product = mongoose.model("Product", ProductDL.productSchema); // creates "products" collection
+
+
     // Create a new product in database
     static async createProduct(productData) {
-        // TODO: Implement database create operation
-        throw new Error("Product creation not yet implemented");
+        const product = new ProductDL.Product(productData);
+        return await product.save();
     }
 
     // Get a single product by ID from database
     static async getProductById(id) {
-        // TODO: Implement database get operation
-        throw new Error("Get product by ID not yet implemented");
+        return await ProductDL.Product.findById(id);
     }
 
     // Get all products from database with optional filters
     static async getAllProducts(filters = {}) {
-        // TODO: Implement database get all operation
-        throw new Error("Get all products not yet implemented");
+        return await ProductDL.Product.find(filters);
     }
 
     // Update an existing product in database
     static async updateProduct(id, updateData) {
-        // TODO: Implement database update operation
-        throw new Error("Product update not yet implemented");
+        return await ProductDL.Product.findByIdAndUpdate(id, updateData, { new: true });
     }
 
     // Remove a product from database
     static async removeProduct(id) {
-        // TODO: Implement database delete operation
-        throw new Error("Product removal not yet implemented");
+        return await ProductDL.Product.findByIdAndDelete(id);
     }
+    
 }
 
 export default ProductDL;
