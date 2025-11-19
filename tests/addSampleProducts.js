@@ -1,6 +1,6 @@
-import productDL from './product.Dl.js';
+import productDL from '../DL/product.Dl.js';
 import mongoose from 'mongoose';
-import connectDB from './connection.Dl.js';
+import connectDB from '../DL/connection.Dl.js';
 await connectDB();
 
 const sampleProducts = [
