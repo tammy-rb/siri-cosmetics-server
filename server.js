@@ -1,8 +1,8 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import { requestLogger, errorHandler } from '../routesmiddlewear/middleware.js';
-import productRoutes from '../routes/product.routes.js';
+import { requestLogger, errorHandler } from './routesmiddlewear/middleware.js';
+import productRoutes from './routes/product.routes.js';
 
 
 // Initialize express app
