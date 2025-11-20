@@ -54,3 +54,13 @@ const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}.`);
 });
+
+import mongoose from "mongoose";
+
+console.log('DB State:', mongoose.connection.readyState);
+try {
+  await mongoose.connect(process.env.MONGO_URI);
+  console.log("MongoDB Connected!");
+} catch (error) {
+  console.log("MongoDB Connection Error:", error.message);
+}

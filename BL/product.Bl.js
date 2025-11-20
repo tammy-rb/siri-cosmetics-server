@@ -46,7 +46,7 @@ class ProductBL {
   static async getProduct(req, res) {
     try {
       const { id } = req.params;
-
+      console.log(id);
       const product = await ProductDL.getProductById(id);
       if (!product) {
         return res.status(404).json({
