@@ -3,6 +3,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import { requestLogger, errorHandler } from './routesmiddlewear/middleware.js';
 import productRoutes from './routes/product.routes.js';
+import userRoutes from './routes/user.routes.js';
 
 
 // Initialize express app
@@ -30,6 +31,7 @@ app.use(requestLogger);
 
 // Use routes
 app.use('/api/products', productRoutes);
+app.use('/api/users', userRoutes);
 
 // Define homepage route for Siri Cosmetics
 app.get("/", (req, res) => {

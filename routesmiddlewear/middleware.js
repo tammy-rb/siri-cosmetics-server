@@ -113,3 +113,36 @@ export const authenticate = (req, res, next) => {
 
   next();
 };
+
+// middleware/authMiddleware.js
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
+
+export function authMiddleware(req, res, next) {
+    try {
+      const authHeader = req.headers.authorization;
+
+    // בדיקה שה־header קיים ומתחיל נכון
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "Invalid authorization header format" });
+    }
+
+    // הוצאת הטוקן בצורה בטוחה
+    const token = authHeader.substring(7).trim();
+
+    if (!token) {
+      return res.status(401).json({ message: "Invalid authorization header format" });
+    }
+
+    // אימות הטוקן
+    const payload = jwt.verify(token, JWT_SECRET);
+
+    req.userId = payload.userId;
+    next();
+  
+    } catch (err) {
+        return res.status(401).json({ message: "Invalid or expired token" });
+    }
+}
+
