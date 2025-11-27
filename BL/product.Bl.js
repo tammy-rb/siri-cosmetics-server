@@ -1,6 +1,6 @@
 // Business Logic for Product operations
 // This will contain the actual business logic implementation
-import ProductDL from "../DL/product.DL.js";
+import ProductDL from "../DL/product.Dl.js";
 class ProductBL {
   static async createProduct(req, res) {
     try {
@@ -67,6 +67,7 @@ class ProductBL {
   // Get all products with optional filters
   static async getAllProducts(req, res) {
     try {
+      console.log("getAllProducts called with query:", req.query);
       const { name, category, minPrice, maxPrice } = req.query;
 
       const filter = {};
