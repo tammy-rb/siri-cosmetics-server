@@ -3,6 +3,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import { requestLogger, errorHandler } from './routesmiddlewear/middleware.js';
 import productRoutes from './routes/product.routes.js';
+import userRoutes from './routes/user.routes.js';
 
 
 // Initialize express app
@@ -30,6 +31,7 @@ app.use(requestLogger);
 
 // Use routes
 app.use('/api/products', productRoutes);
+app.use('/api/users', userRoutes);
 
 // Define homepage route for Siri Cosmetics
 app.get("/", (req, res) => {
@@ -54,3 +56,13 @@ const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}.`);
 });
+
+import mongoose from "mongoose";
+
+console.log('DB State:', mongoose.connection.readyState);
+try {
+  await mongoose.connect(process.env.MONGO_URI);
+  console.log("MongoDB Connected!");
+} catch (error) {
+  console.log("MongoDB Connection Error:", error.message);
+}
