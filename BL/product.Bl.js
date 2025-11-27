@@ -67,7 +67,7 @@ class ProductBL {
   // Get all products with optional filters
   static async getAllProducts(req, res) {
     try {
-      console.log("getAllProducts called with query:", req.query);
+      
       const { name, category, minPrice, maxPrice } = req.query;
 
       const filter = {};
