@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import { requestLogger, errorHandler } from './routesmiddlewear/middleware.js';
 import productRoutes from './routes/product.routes.js';
 import userRoutes from './routes/user.routes.js';
+import cartRoutes from './routes/cart.routes.js';
 
 
 // Initialize express app
@@ -15,8 +16,8 @@ app.use(express.static('public'));
 
 // Enable CORS for only the website client at http://localhost:3000
 const corsOptions = {
-    origin: ["http://localhost:3000"],
-    credentials: true,
+  origin: ["http://localhost:5173", "http://localhost:3000"],
+  credentials: true,
 };
 app.use(cors(corsOptions));
 
@@ -36,6 +37,7 @@ app.use(requestLogger);
 // Use routes
 app.use('/api/products', productRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/cart', cartRoutes);
 
 // Define homepage route for Siri Cosmetics
 app.get("/", (req, res) => {
@@ -50,6 +52,7 @@ app.get("/", (req, res) => {
         ],
         endpoints: {
             products: "/api/products",
+            cart: "/api/cart",
         },
         version: "1.0.0"
     });

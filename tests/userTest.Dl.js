@@ -1,6 +1,7 @@
 //write test code for user here - using user.Dl.js methods
 import UserDL from '../DL/user.Dl.js';
 import connectDB from '../DL/connection.Dl.js';
+import mongoose from 'mongoose';
 
 await connectDB();
 async function testUserDL() {
@@ -90,4 +91,14 @@ async function testUserDL() {
     return;
 }
 
-testUserDL();
+// Run the test once and close the mongoose connection when done
+testUserDL()
+    .then(() => {
+        console.log('userTest.Dl finished, closing DB connection.');
+        mongoose.connection.close();
+    })
+    .catch((err) => {
+        console.error('userTest.Dl failed:', err);
+        mongoose.connection.close();
+        process.exit(1);
+    });
