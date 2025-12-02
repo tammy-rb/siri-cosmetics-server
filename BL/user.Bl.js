@@ -1,7 +1,7 @@
 // bl/UserBL.js
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import UserDL from "../dl/user.Dl.js";
+import UserDL from "../DL/user.Dl.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
 const JWT_EXPIRES_IN = "7d";

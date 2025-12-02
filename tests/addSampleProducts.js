@@ -101,4 +101,13 @@ async function addSampleProducts() {
     }
 }
 
-addSampleProducts();
+// Run and close DB connection when finished to avoid hanging process
+addSampleProducts()
+    .then(() => {
+        console.log('addSampleProducts finished, closing DB connection.');
+        mongoose.connection.close();
+    })
+    .catch((err) => {
+        console.error('addSampleProducts failed:', err);
+        mongoose.connection.close();
+    });
