@@ -1,6 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { requestLogger, errorHandler } from './routesmiddlewear/middleware.js';
 import productRoutes from './routes/product.routes.js';
 import userRoutes from './routes/user.routes.js';
@@ -25,6 +26,9 @@ const urlencodedParser = bodyParser.urlencoded({ extended: true });
 
 app.use(jsonParser);
 app.use(urlencodedParser);
+
+// Use cookie-parser middleware
+app.use(cookieParser()); 
 
 // Use request logging middleware
 app.use(requestLogger);

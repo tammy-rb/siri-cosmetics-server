@@ -121,18 +121,24 @@ const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
 
 export function authMiddleware(req, res, next) {
     try {
-      const authHeader = req.headers.authorization;
+     
+    // הוצאת הטוקן בצורה בטוחה
+    const authHeader = req.headers.authorization;
+    let token = null;
 
-    // בדיקה שה־header קיים ומתחיל נכון
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ message: "Invalid authorization header format" });
+    // 1. ניסיון ראשון – מתוך Authorization: Bearer ...
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.slice(7).trim();
     }
 
-    // הוצאת הטוקן בצורה בטוחה
-    const token = authHeader.substring(7).trim();
+    // 2. אם אין Header – לנסות מהקוקי
+    if (!token && req.cookies && req.cookies.authToken) {
+      token = req.cookies.authToken;
+    }
 
+    // 3. אם עדיין אין טוקן – אין גישה
     if (!token) {
-      return res.status(401).json({ message: "Invalid authorization header format" });
+      return res.status(401).json({ message: "No token provided" });
     }
 
     // אימות הטוקן

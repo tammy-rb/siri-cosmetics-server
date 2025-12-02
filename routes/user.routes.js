@@ -9,9 +9,17 @@ const router = express.Router();
 router.post("/register", async (req, res, next) => {
     try {
         const result = await UserBL.registerUser(req.body);
+         // Set the token in an HTTP-Only cookie
+        res.cookie('authToken', result.token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days, same as JWT expiration
+        });
+
         res.status(201).json({
             user: result.user,
-            token: result.token,
+            message: "User registered and logged in successfully"
         });
     } catch (err) {
         // למשל דוא"ל כפול – נחזיר 400
@@ -27,9 +35,18 @@ router.post("/login", async (req, res, next) => {
     try {
         const { email, password } = req.body;
         const result = await UserBL.login(email, password);
+        
+        // Set the token in an HTTP-Only cookie
+        res.cookie('authToken', result.token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+
         res.json({
             user: result.user,
-            token: result.token,
+            message: "Logged in successfully"
         });
     } catch (err) {
         // שגיאת התחברות -> 401
