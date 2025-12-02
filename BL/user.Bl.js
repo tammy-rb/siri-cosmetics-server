@@ -1,7 +1,8 @@
 // bl/UserBL.js
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import UserDL from "../dl/user.Dl.js";
+import UserDL from "../DL/user.Dl.js";
+import CartDL from "../DL/cart.Dl.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
 const JWT_EXPIRES_IN = "7d";
@@ -87,6 +88,7 @@ class UserBL {
     // Delete user
     static async removeUser(id) {
         const deleted = await UserDL.removeUser(id);
+        await CartDL.deleteCartByUserId(id);
         if (!deleted) throw new Error("User not found");
         return deleted;
     }
