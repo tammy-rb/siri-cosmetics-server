@@ -5,7 +5,7 @@ class AppointmentDL {
         userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
         appointmentTypeId: { type: mongoose.Schema.Types.ObjectId, ref: "AppointmentType", required: true },
         // date and time of the appointment - check the appoinment time is open
-        date: { type: Date, required: true, unique: true },
+        date: { type: Date, required: true },
         status: { type: String, enum: ['scheduled', 'completed', 'canceled', 'confirmed'], default: 'scheduled' },
         notes: String
     }, { timestamps: true });
@@ -27,7 +27,7 @@ class AppointmentDL {
     }
     // Update an existing appointment in database
     static async updateAppointment(id, updateData) {
-        return await AppointmentDL.Appointment.findByIdAndUpdate(id, updateData, { new: true });
+        return await AppointmentDL.Appointment.findByIdAndUpdate(id, updateData, { new: true }).populate('appointmentTypeId');
     }
     // Remove an appointment from database
     static async removeAppointment(id) {
