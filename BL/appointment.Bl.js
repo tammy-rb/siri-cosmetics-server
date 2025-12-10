@@ -150,7 +150,7 @@ class AppointmentBL {
   // Get appointments in a date range
   static async getAppointmentsByDateRange(req, res) {
     try {
-      const { startDate, endDate } = req.query;
+      const { startDate, endDate, userId } = req.query;
 
       if (!startDate || !endDate) {
         return res.status(400).json({
@@ -167,12 +167,19 @@ class AppointmentBL {
         });
       }
 
-      const appointments = await AppointmentDL.getAllAppointments({
+      const filter = {
         date: {
           $gte: start,
           $lte: end,
         },
-      });
+      };
+
+      // If userId is provided, filter by userId
+      if (userId) {
+        filter.userId = userId;
+      }
+
+      const appointments = await AppointmentDL.getAllAppointments(filter);
 
       return res.status(200).json({
         message: "Get appointments by date range successfully",
