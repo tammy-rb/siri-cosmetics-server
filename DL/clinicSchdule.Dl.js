@@ -61,6 +61,15 @@ class ClinicSchduleDL {
         return await specialHours.save();
     }
 
+    //get all special hours and closed days in the future
+    static async getAllSpecialHoursAndClosedDays() {
+        const now = new Date();
+        //$gte: greater than or equal
+        const specialHours = await ClinicSchduleDL.SpecialHours.find({ date: { $gte: now } });
+        const closedDays = await ClinicSchduleDL.ClosedDays.find({ date: { $gte: now } });
+        return { specialHours, closedDays };
+    }
+
     //delete special hours
     static async deleteSpecialHours(date) {
         return await ClinicSchduleDL.SpecialHours.findOneAndDelete({ date });

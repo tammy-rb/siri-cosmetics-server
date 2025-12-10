@@ -9,6 +9,9 @@ router.get("/month", ClinicScheduleBL.getClinicScheduleForMonth);
 // Get basic clinic schedule (weekly)
 router.get("/basic", ClinicScheduleBL.getBasicSchedule);
 
+//Get special hours and closed days in the future
+router.get("/special-days", ClinicScheduleBL.getSpecialHoursAndClosedDays);
+
 // Update clinic schedule for a specific day of week
 router.put("/basic", ClinicScheduleBL.updateClinicSchedule);
 
