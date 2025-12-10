@@ -350,7 +350,9 @@ class ClinicScheduleBL {
 }
 
 //export check if in available hours for a given date and time
-export async function isInAvailableHours(date, time, durationMinutes) {
+export async function isClinicOpen(date, durationMinutes) {
+    // Get time in "HH:MM" format from type Date object
+    const time = date.toTimeString().slice(0,5); // "HH:MM"
     const clinicSchedule = await ClinicSchduleDL.getClinicSchdule();
     const dayOfWeek = date.getDay();
     const timeSlots = clinicSchedule.find(s => s.dayOfWeek === dayOfWeek)?.timeSlots || [];

@@ -1,6 +1,7 @@
 // Business Logic for Appointment operations
 import AppointmentDL from "../DL/appoitment.Dl.js";
 import mongoose from "mongoose";
+import { isClinicOpen } from "./clinicSchedule.Bl.js";
 
 class AppointmentBL {
   // Create a new appointment (book appointment)
@@ -19,6 +20,15 @@ class AppointmentBL {
       if (appointmentDate < new Date()) {
         return res.status(400).json({
           message: "Appointment date must be in the future",
+        });
+      }
+
+      // Check if clinic is open for the requested date, time & duration
+      const duration = (await AppointmentDL.getAppointmentTypeById(appointmentTypeId)).durationMinutes;
+      const clinicOpen = await isClinicOpen(appointmentDate, duration);
+      if (!clinicOpen) {
+        return res.status(400).json({
+          message: "The clinic is closed at the requested date and time",
         });
       }
 
