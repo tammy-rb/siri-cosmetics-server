@@ -1,5 +1,6 @@
 // Business Logic for Appointment operations
 import AppointmentDL from "../DL/appoitment.Dl.js";
+import AppointmentTypeDL from "../DL/appoitmentType.Dl.js";
 import mongoose from "mongoose";
 import { isClinicOpen } from "./clinicSchedule.Bl.js";
 
@@ -23,8 +24,20 @@ class AppointmentBL {
         });
       }
 
+      // Get appointment type (for duration) from AppointmentTypeDL
+      const appointmentType = await AppointmentTypeDL.getAppointmentTypeById(
+        appointmentTypeId
+      );
+
+      if (!appointmentType) {
+        return res.status(400).json({
+          message: "Invalid appointment type",
+        });
+      }
+
+      const duration = appointmentType.durationMinutes;
+
       // Check if clinic is open for the requested date, time & duration
-      const duration = (await AppointmentDL.getAppointmentTypeById(appointmentTypeId)).durationMinutes;
       const clinicOpen = await isClinicOpen(appointmentDate, duration);
       if (!clinicOpen) {
         return res.status(400).json({
@@ -35,7 +48,7 @@ class AppointmentBL {
       // Check if the time slot is available
       const existingAppointment = await AppointmentDL.getAllAppointments({
         date: appointmentDate,
-        status: { $in: ['scheduled', 'confirmed'] }
+        status: { $in: ["scheduled", "confirmed"] },
       });
 
       if (existingAppointment.length > 0) {
@@ -48,7 +61,7 @@ class AppointmentBL {
         userId,
         appointmentTypeId,
         date: appointmentDate,
-        status: status || 'scheduled',
+        status: status || "scheduled",
         notes,
       });
 
@@ -66,9 +79,12 @@ class AppointmentBL {
   static async getAppointment(req, res) {
     try {
       const { id } = req.params;
-      
-      const appointment = await AppointmentDL.getAppointmentById(id);
-      
+      const { includeUser } = req.query; // optional ?includeUser=true
+
+      const appointment = await AppointmentDL.getAppointmentById(id, {
+        includeUser: includeUser === "true",
+      });
+
       if (!appointment) {
         return res.status(404).json({
           message: "Appointment not found",
@@ -88,7 +104,7 @@ class AppointmentBL {
   // Get all appointments with optional filters
   static async getAllAppointments(req, res) {
     try {
-      const { userId, status, appointmentTypeId } = req.query;
+      const { userId, status, appointmentTypeId, includeUsers } = req.query;
 
       const filter = {};
 
@@ -104,7 +120,9 @@ class AppointmentBL {
         filter.appointmentTypeId = appointmentTypeId;
       }
 
-      const appointments = await AppointmentDL.getAllAppointments(filter);
+      const appointments = await AppointmentDL.getAllAppointments(filter, {
+        includeUsers: includeUsers === "true",
+      });
 
       return res.status(200).json({
         message: "Get all appointments successfully",
@@ -123,7 +141,7 @@ class AppointmentBL {
   // Get appointments by specific date
   static async getAppointmentsByDate(req, res) {
     try {
-      const { date } = req.query;
+      const { date, includeUsers } = req.query;
 
       if (!date) {
         return res.status(400).json({
@@ -135,12 +153,17 @@ class AppointmentBL {
       const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
       const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
 
-      const appointments = await AppointmentDL.getAllAppointments({
-        date: {
-          $gte: startOfDay,
-          $lte: endOfDay,
+      const appointments = await AppointmentDL.getAllAppointments(
+        {
+          date: {
+            $gte: startOfDay,
+            $lte: endOfDay,
+          },
         },
-      });
+        {
+          includeUsers: includeUsers === "true",
+        }
+      );
 
       return res.status(200).json({
         message: "Get appointments by date successfully",
@@ -160,7 +183,7 @@ class AppointmentBL {
   // Get appointments in a date range
   static async getAppointmentsByDateRange(req, res) {
     try {
-      const { startDate, endDate, userId } = req.query;
+      const { startDate, endDate, userId, includeUsers } = req.query;
 
       if (!startDate || !endDate) {
         return res.status(400).json({
@@ -189,7 +212,9 @@ class AppointmentBL {
         filter.userId = userId;
       }
 
-      const appointments = await AppointmentDL.getAllAppointments(filter);
+      const appointments = await AppointmentDL.getAllAppointments(filter, {
+        includeUsers: includeUsers === "true",
+      });
 
       return res.status(200).json({
         message: "Get appointments by date range successfully",
@@ -211,10 +236,16 @@ class AppointmentBL {
   static async getAppointmentsByUser(req, res) {
     try {
       const { userId } = req.params;
+      const { includeUsers } = req.query;
 
-      const appointments = await AppointmentDL.getAllAppointments({
-        userId: userId,
-      });
+      const appointments = await AppointmentDL.getAllAppointments(
+        {
+          userId: userId,
+        },
+        {
+          includeUsers: includeUsers === "true",
+        }
+      );
 
       return res.status(200).json({
         message: "Get user appointments successfully",
@@ -249,8 +280,8 @@ class AppointmentBL {
         // Check if new time slot is available
         const existingAppointment = await AppointmentDL.getAllAppointments({
           date: appointmentDate,
-          status: { $in: ['scheduled', 'confirmed'] },
-          _id: { $ne: new mongoose.Types.ObjectId(id) }
+          status: { $in: ["scheduled", "confirmed"] },
+          _id: { $ne: new mongoose.Types.ObjectId(id) },
         });
 
         if (existingAppointment.length > 0) {
@@ -260,7 +291,10 @@ class AppointmentBL {
         }
       }
 
-      const updatedAppointment = await AppointmentDL.updateAppointment(id, updates);
+      const updatedAppointment = await AppointmentDL.updateAppointment(
+        id,
+        updates
+      );
 
       if (!updatedAppointment) {
         return res.status(404).json({
@@ -284,7 +318,7 @@ class AppointmentBL {
       const { id } = req.params;
 
       const updatedAppointment = await AppointmentDL.updateAppointment(id, {
-        status: 'canceled'
+        status: "canceled",
       });
 
       if (!updatedAppointment) {
