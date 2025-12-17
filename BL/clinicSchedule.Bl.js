@@ -1,5 +1,7 @@
 // Business Logic for Clinic Schedule operations
 import ClinicSchduleDL from "../DL/clinicSchdule.Dl.js";
+import AppointmentDL from "../DL/appoitment.Dl.js";
+
 
 class ClinicScheduleBL {
     // Get clinic schedule for a specific month
@@ -44,6 +46,85 @@ class ClinicScheduleBL {
             });
         }
     }
+
+    static async getAvailableTimeSlots(req, res) {
+    try {
+      const { date } = req.query;
+      if (!date) {
+        return res.status(400).json({ message: "date is required (YYYY-MM-DD)" });
+      }
+
+      const day = new Date(`${date}T00:00:00`);
+      if (isNaN(day.getTime())) {
+        return res.status(400).json({ message: "Invalid date format" });
+      }
+
+      const timeSlots = await getTimeSlotsForDate(day);
+      if (!timeSlots.length) {
+        return res.status(200).json({
+          message: "Clinic is closed / no time slots for this date",
+          date,
+          data: [],
+        });
+      }
+
+      const startOfDay = new Date(day);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(day);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const appointments = await AppointmentDL.getAllAppointments(
+        {
+          date: { $gte: startOfDay, $lte: endOfDay },
+          status: { $in: ["scheduled", "confirmed"] },
+        },
+        { includeUsers: false }
+      );
+
+      const busy = appointments.map(a => {
+        const start = new Date(a.date);
+        const dur = a.appointmentTypeId?.durationMinutes || 30;
+        const end = new Date(start.getTime() + dur * 60000);
+        return { start, end };
+      });
+
+      function overlapsBusy(slotStart, slotEnd) {
+        return busy.some(b => slotStart < b.end && slotEnd > b.start);
+      }
+
+      const available = [];
+      for (const slot of timeSlots) {
+        const openStartMin = hhmmToMinutes(slot.from);
+        const openEndMin = hhmmToMinutes(slot.to);
+
+        for (let m = openStartMin; m + 30 <= openEndMin; m += 30) {
+          const hhmm = minutesToHHMM(m);
+
+          const slotStart = new Date(day);
+          slotStart.setHours(Math.floor(m / 60), m % 60, 0, 0);
+
+          const slotEnd = new Date(slotStart.getTime() + 30 * 60000);
+
+          if (!overlapsBusy(slotStart, slotEnd)) {
+            available.push(hhmm);
+          }
+        }
+      }
+
+      return res.status(200).json({
+        message: "Available time slots fetched successfully",
+        date,
+        data: available,
+      });
+    } catch (err) {
+      console.error("Get available time slots error:", err);
+      return res.status(500).json({
+        message: "Error getting available time slots",
+        error: err.message,
+      });
+    }
+  }
 
     // Get basic clinic schedule (all days of week)
     static async getBasicSchedule(req, res) {
@@ -400,5 +481,37 @@ export async function isClinicOpen(date, durationMinutes) {
     }
     return false;
 }
+
+// מחזיר timeSlots לתאריך ספציפי לפי: closedDays -> specialHours -> schedule רגיל
+async function getTimeSlotsForDate(date) {
+  const clinicSchedule = await ClinicSchduleDL.getClinicSchdule();
+  const dayOfWeek = date.getDay();
+
+  // Closed day?
+  const dayKey = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const closedDay = await ClinicSchduleDL.ClosedDays.findOne({ date: dayKey });
+  if (closedDay) return []; // אין שעות עבודה בכלל
+
+  // Special hours?
+  const specialHours = await ClinicSchduleDL.SpecialHours.findOne({ date: dayKey });
+  if (specialHours) return specialHours.timeSlots || [];
+
+  // Regular schedule
+  return clinicSchedule.find(s => s.dayOfWeek === dayOfWeek)?.timeSlots || [];
+}
+
+function hhmmToMinutes(hhmm) {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function minutesToHHMM(minutes) {
+  const h = String(Math.floor(minutes / 60)).padStart(2, "0");
+  const m = String(minutes % 60).padStart(2, "0");
+  return `${h}:${m}`;
+}
+
+
+
 
 export default ClinicScheduleBL;

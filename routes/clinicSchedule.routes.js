@@ -15,6 +15,9 @@ router.get("/special-days", ClinicScheduleBL.getSpecialHoursAndClosedDays);
 // Update clinic schedule for a specific day of week
 router.put("/basic", ClinicScheduleBL.updateClinicSchedule);
 
+
+router.get("/available-slots", ClinicScheduleBL.getAvailableTimeSlots);
+
 // Add special hours for a specific date
 router.post("/special-hours", ClinicScheduleBL.addSpecialHours);
 
