@@ -26,14 +26,6 @@ router.post("/checkout", authMiddleware, async (req, res, next) => {
   }
 });
 
-// אופציונלי – לראות הזמנות של המשתמש המחובר
-router.get("/my-orders", authMiddleware, async (req, res, next) => {
-  try {
-    const orders = await OrderBL.getUserOrders(req.userId);
-    res.json(orders);
-  } catch (err) {
-    next(err);
-  }
-});
+
 
 export default router;
