@@ -5,8 +5,17 @@ id #running automatic
 name
 email
 phone
-address*/
+shippingAddresses - array of address objects*/
 class UserDL {
+
+    static addressSchema = new mongoose.Schema({
+        country: { type: String, required: true },
+        city: { type: String, required: true },
+        street: { type: String, required: true },
+        number: { type: String, required: true },
+        aptNumber: String,
+        isDefault: { type: Boolean, default: false }
+    }, { _id: true });
 
     static cosmeticPreferencesSchema = new mongoose.Schema({
         skinType: {
@@ -22,7 +31,8 @@ class UserDL {
         name: { type: String, required: true },
         email: { type: String, required: true, unique: true },
         phone: String,
-        address: String,
+        address: String, // Keep for backward compatibility
+        shippingAddresses: [UserDL.addressSchema],
         cosmeticPreferences: UserDL.cosmeticPreferencesSchema 
     }, { timestamps: true });
 
