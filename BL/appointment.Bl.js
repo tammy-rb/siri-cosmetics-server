@@ -1,8 +1,8 @@
 // Business Logic for Appointment operations
 import AppointmentDL from "../DL/appoitment.Dl.js";
 import AppointmentTypeDL from "../DL/appoitmentType.Dl.js";
-import mongoose from "mongoose";
-import { isClinicOpen } from "./clinicSchedule.Bl.js";
+import mongoose, { get } from "mongoose";
+import { isTimeSlotBooked, isDayFullyBooked } from "./clinicSchedule.Bl.js";
 
 class AppointmentBL {
   // Create a new appointment (book appointment)
@@ -37,23 +37,11 @@ class AppointmentBL {
 
       const duration = appointmentType.durationMinutes;
 
-      // Check if clinic is open for the requested date, time & duration
-      const clinicOpen = await isClinicOpen(appointmentDate, duration);
-      if (!clinicOpen) {
-        return res.status(400).json({
-          message: "The clinic is closed at the requested date and time",
-        });
-      }
 
-      // Check if the time slot is available
-      const existingAppointment = await AppointmentDL.getAllAppointments({
-        date: appointmentDate,
-        status: { $in: ["scheduled", "confirmed"] },
-      });
 
-      if (existingAppointment.length > 0) {
+      if (!await isTimeSlotBooked(appointmentDate, duration)) {
         return res.status(400).json({
-          message: "This time slot is already booked",
+          message: "This time slot is not available",
         });
       }
 
@@ -262,6 +250,40 @@ class AppointmentBL {
     }
   }
 
+  //get fully booked days per month
+  static async getFullyBookedDays(req, res) {
+    try {
+      const { month, year } = req.query;
+      if (!month || !year) {
+        return res.status(400).json({
+          message: "month and year are required",
+        });
+      }
+      const fullyBookedDays = [];
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const isFullyBooked = await isDayFullyBooked(date);
+        if (isFullyBooked) {
+          console.log(`Day ${day} is fully booked`);
+          fullyBookedDays.push(day);
+        }
+      }
+      return res.status(200).json({
+        message: "Get fully booked days successfully",
+        month,
+        year,
+        data: fullyBookedDays,
+      });
+    } catch (err) {
+      console.error("Get fully booked days error:", err);
+      return res.status(500).json({
+        message: "Error getting fully booked days",
+        error: err.message,
+      });
+    }
+  }
+
   // Update an existing appointment
   static async updateAppointment(req, res) {
     try {
@@ -364,6 +386,7 @@ class AppointmentBL {
       });
     }
   }
+
 }
 
 export default AppointmentBL;

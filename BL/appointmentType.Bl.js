@@ -14,9 +14,9 @@ class AppointmentTypeBL {
       }
 
       // Validate duration is positive
-      if (durationMinutes <= 0) {
+      if (durationMinutes <= 0 || durationMinutes % 15 !== 0) {
         return res.status(400).json({
-          message: "Duration must be a positive number",
+          message: "Duration must be a positive number and a multiple of 15 minutes",
         });
       }
 
