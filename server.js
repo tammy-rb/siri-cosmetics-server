@@ -1,6 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
+import path from 'path';
 import cookieParser from 'cookie-parser';
 import { requestLogger, errorHandler } from './routesmiddlewear/middleware.js';
 import productRoutes from './routes/product.routes.js';
@@ -36,6 +37,8 @@ app.use(cookieParser());
 
 // Use request logging middleware
 app.use(requestLogger);
+
+app.use(express.static(path.join(process.cwd(), "public")));
 
 // Use routes
 app.use('/api/products', productRoutes);
