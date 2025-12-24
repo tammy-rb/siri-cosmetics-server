@@ -22,7 +22,8 @@ class ClinicScheduleBL {
                 const dateWithSlotTime = new Date(day);
                 const [hour, minute] = slot.from.split(':').map(Number);
                 dateWithSlotTime.setHours(hour, minute, 0, 0);
-                const isBooked = AppointmentBL.isTimeSlotBooked(dateWithSlotTime, 30); // assuming 30 minutes duration
+                const isBooked = isTimeSlotBooked(dateWithSlotTime, 30); // assuming 30 minutes duration
+                return !isBooked;
             });
             if (!timeSlots.length) {
                 return res.status(200).json({
