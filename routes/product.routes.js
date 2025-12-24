@@ -5,6 +5,7 @@ import {
   requestLogger,
   validateProductData,
 } from "../routesmiddlewear/middleware.js";
+import { authMiddleware } from "../routesmiddlewear/middleware.js";
 
 
 const router = express.Router();
@@ -19,7 +20,7 @@ router.get("/:id", ProductBL.getProduct);
 router.get("/", ProductBL.getAllProducts);
 
 // Update a product 
-router.put("/:id", ProductBL.updateProduct);
+router.put("/:id", authMiddleware, ProductBL.updateProduct);
 
 // Delete a product by ID
 router.delete("/:id", ProductBL.removeProduct);
