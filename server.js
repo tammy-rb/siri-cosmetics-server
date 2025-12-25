@@ -3,7 +3,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import path from 'path';
 import cookieParser from 'cookie-parser';
-import { requestLogger, errorHandler } from './routesmiddlewear/middleware.js';
+import { requestLogger, errorHandler, authMiddleware } from './routesmiddlewear/middleware.js';
 import productRoutes from './routes/product.routes.js';
 import userRoutes from './routes/user.routes.js';
 import cartRoutes from './routes/cart.routes.js';
@@ -38,13 +38,13 @@ app.use(requestLogger);
 app.use(express.static(path.join(process.cwd(), "public")));
 
 // Use routes (routes will handle their own body parsing as needed)
-app.use('/api/products', productRoutes);
-app.use('/api/users', express.json(), userRoutes);
-app.use('/api/cart', express.json(), cartRoutes);
-app.use('/api/appointments', express.json(), appointmentRoutes);
-app.use('/api/appointment-types', express.json(), appointmentTypeRoutes);
-app.use('/api/clinic-schedule', express.json(), clinicScheduleRoutes);
-app.use('/api/orders', orderRoutes);
+app.use('/api/products', express.json(), authMiddleware, productRoutes);
+app.use('/api/users', express.json(), authMiddleware, userRoutes);
+app.use('/api/cart', express.json(), authMiddleware, cartRoutes);
+app.use('/api/appointments', express.json(), authMiddleware, appointmentRoutes);
+app.use('/api/appointment-types', express.json(), authMiddleware, appointmentTypeRoutes);
+app.use('/api/clinic-schedule', express.json(), authMiddleware, clinicScheduleRoutes);
+app.use('/api/orders', authMiddleware, orderRoutes);
 
 // Define homepage route for Siri Cosmetics
 app.get("/", (req, res) => {

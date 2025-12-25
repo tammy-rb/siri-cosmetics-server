@@ -190,3 +190,34 @@ export function authMiddleware(req, res, next) {
     }
 }
 
+// Authorization middleware to check for admin role or if getting own data
+export function authorizeAdminOrSelf(req, res, next) {
+    try {
+        const userRole = req.user.role;
+        const userId = req.userId;
+        const paramId = req.params.id;
+        if (userRole === 'admin' || userId === paramId) {
+            return next();
+        } else {
+            return res.status(403).json({ message: "Forbidden: Insufficient permissions" });
+        }
+    } catch (err) {
+        console.error("Authorization error:", err);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+// Authorization middleware to check for admin role only
+export function authorizeAdmin(req, res, next) {
+    try {
+        const userRole = req.user.role;
+        if (userRole === 'admin') {
+            return next();
+        } else {
+            return res.status(403).json({ message: "Forbidden: Admins only" });
+        }
+    } catch (err) {
+        console.error("Authorization error:", err);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}

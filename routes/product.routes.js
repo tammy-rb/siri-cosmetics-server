@@ -4,7 +4,8 @@ import {
   authMiddleware,
   requestLogger,
   validateProductData,
-  uploadMiddleware
+  uploadMiddleware,
+  authorizeAdmin
 } from "../routesmiddlewear/middleware.js";
 
 const router = express.Router();
@@ -14,13 +15,13 @@ router.get("/", ProductBL.getAllProducts);
 router.get("/:id", ProductBL.getProduct);
 
 // Create a product (with validation & image upload) - uses multer, no JSON parser
-router.post("/", uploadMiddleware, authMiddleware, requestLogger, ProductBL.createProduct);
+router.post("/", uploadMiddleware, authMiddleware, authorizeAdmin, requestLogger, ProductBL.createProduct);
 
 // Update a product - uses multer, no JSON parser
-router.put("/:id", uploadMiddleware, authMiddleware, ProductBL.updateProduct);
+router.put("/:id", uploadMiddleware, authMiddleware, authorizeAdmin, ProductBL.updateProduct);
 
 // Delete a product by ID
-router.delete("/:id", authMiddleware, ProductBL.removeProduct);
+router.delete("/:id", authMiddleware, authorizeAdmin, ProductBL.removeProduct);
 
 
 export default router;

@@ -1,5 +1,6 @@
 import express from "express";
 import AppointmentTypeBL from "../BL/appointmentType.Bl.js";
+import { authorizeAdmin } from "../routesmiddlewear/middleware.js";
 
 const router = express.Router();
 
@@ -16,12 +17,12 @@ router.get("/", AppointmentTypeBL.getAllAppointmentTypes);
 router.get("/:id", AppointmentTypeBL.getAppointmentType);
 
 // Create a new appointment type
-router.post("/", AppointmentTypeBL.createAppointmentType);
+router.post("/", authorizeAdmin, AppointmentTypeBL.createAppointmentType);
 
 // Update an appointment type
-router.put("/:id", AppointmentTypeBL.updateAppointmentType);
+router.put("/:id", authorizeAdmin, AppointmentTypeBL.updateAppointmentType);
 
 // Delete an appointment type
-router.delete("/:id", AppointmentTypeBL.removeAppointmentType);
+router.delete("/:id", authorizeAdmin, AppointmentTypeBL.removeAppointmentType);
 
 export default router;
