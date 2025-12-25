@@ -8,10 +8,8 @@ import {
 } from "../routesmiddlewear/middleware.js";
 
 const router = express.Router();
-
-// Create a product (with validation & image upload)
-router.post("/", authMiddleware, requestLogger, uploadMiddleware, ProductBL.createProduct);
-
+// Get all products
+router.get("/", ProductBL.getAllProducts);
 // Get a product by ID
 router.get("/:id", ProductBL.getProduct);
 
