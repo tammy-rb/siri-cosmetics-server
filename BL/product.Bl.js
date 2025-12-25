@@ -35,7 +35,19 @@ const upload = multer({
 });
 
 class ProductBL {
-  static uploadMiddleware = upload.single('image');
+  // Multer middleware wrapper to ensure it runs properly
+  static uploadMiddleware = (req, res, next) => {
+    console.log("Multer middleware called");
+    upload.single('image')(req, res, (err) => {
+      console.log("After multer - req.body:", req.body);
+      console.log("After multer - req.file:", req.file);
+      if (err) {
+        console.error("Multer error:", err);
+        return res.status(400).json({ message: err.message });
+      }
+      next();
+    });
+  };
 
   static async createProduct(req, res) {
     try {
@@ -156,20 +168,45 @@ class ProductBL {
   // Update an existing product
   static async updateProduct(req, res) {
     try {
+      console.log("=== UPDATE PRODUCT DEBUG ===");
+      console.log("req.body:", req.body);
+      console.log("req.file:", req.file);
+      console.log("req.headers['content-type']:", req.headers['content-type']);
+      console.log("========================");
       const { id } = req.params;
-      const updates = req.body;
+      
+      const { name, price, description, category, inStock } = req.body;
 
-      if (updates.price !== undefined && updates.price < 0) {
-        return res.status(400).json({
-          message: "price must be positive",
-        });
+      const updates = {};
+
+      if (name) updates.name = name;
+      if (price !== undefined && price !== null && price !== '') {
+        const priceNum = parseFloat(price);
+        if (priceNum < 0) {
+          return res.status(400).json({
+            message: "price must be positive",
+          });
+        }
+        updates.price = priceNum;
+      }
+      if (description !== undefined && description !== null) updates.description = description;
+      if (category) updates.category = category;
+      if (inStock !== undefined && inStock !== null && inStock !== '') {
+        const stockNum = parseInt(inStock);
+        if (stockNum < 0) {
+          return res.status(400).json({
+            message: "inStock cannot be negative",
+          });
+        }
+        updates.inStock = stockNum;
       }
 
-      if (updates.inStock !== undefined && updates.inStock < 0) {
-        return res.status(400).json({
-          message: "inStock cannot be negative",
-        });
+      // If image was uploaded, set the imageUrl
+      if (req.file) {
+        updates.imageUrl = `/product_images/${req.file.filename}`;
       }
+
+      console.log("Updates to apply:", updates);
 
       const updatedProduct = await ProductDL.updateProduct(id, updates);
 
@@ -182,10 +219,9 @@ class ProductBL {
       return res.json(updatedProduct);
     } catch (err) {
       console.error("Update product error:", err);
-     res.status(501).json({
-      message: "Update product functionality not yet implemented",
-      endpoint: `PUT /api/products/${id}`,
-    });
+      return res.status(500).json({
+        message: err.message || "Error updating product",
+      });
     }
   }
 
