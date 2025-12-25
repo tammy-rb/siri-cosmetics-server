@@ -1,31 +1,26 @@
 import express from "express";
 import ProductBL from "../BL/product.Bl.js";
 import {
-  authenticate,
+  authMiddleware,
   requestLogger,
   validateProductData,
+  uploadMiddleware
 } from "../routesmiddlewear/middleware.js";
 
-
 const router = express.Router();
-
-// Create a product (with validation & image upload)
-router.post("/", ProductBL.createProduct);
-
+// Get all products
+router.get("/", ProductBL.getAllProducts);
 // Get a product by ID
 router.get("/:id", ProductBL.getProduct);
 
-// Get all products (optional name, category, and price filters)
-router.get("/", ProductBL.getAllProducts);
+// Create a product (with validation & image upload) - uses multer, no JSON parser
+router.post("/", uploadMiddleware, authMiddleware, requestLogger, ProductBL.createProduct);
 
-// Update a product 
-router.put("/:id", ProductBL.updateProduct);
+// Update a product - uses multer, no JSON parser
+router.put("/:id", uploadMiddleware, authMiddleware, ProductBL.updateProduct);
 
 // Delete a product by ID
-router.delete("/:id", ProductBL.removeProduct);
-
-router.get("/", authenticate, requestLogger, ProductBL.getAllProducts);
-router.post("/", authenticate, requestLogger, validateProductData, ProductBL.createProduct);
+router.delete("/:id", authMiddleware, ProductBL.removeProduct);
 
 
 export default router;
