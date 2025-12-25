@@ -10,7 +10,7 @@ import {
 const router = express.Router();
 
 // Create a product (with validation & image upload)
-router.post("/", ProductBL.createProduct);
+router.post("/", authenticate, requestLogger, ProductBL.uploadMiddleware, ProductBL.createProduct);
 
 // Get a product by ID
 router.get("/:id", ProductBL.getProduct);
@@ -23,9 +23,6 @@ router.put("/:id", ProductBL.updateProduct);
 
 // Delete a product by ID
 router.delete("/:id", ProductBL.removeProduct);
-
-router.get("/", authenticate, requestLogger, ProductBL.getAllProducts);
-router.post("/", authenticate, requestLogger, validateProductData, ProductBL.createProduct);
 
 
 export default router;

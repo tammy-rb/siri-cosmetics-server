@@ -1,14 +1,49 @@
 // Business Logic for Product operations
 // This will contain the actual business logic implementation
 import ProductDL from "../DL/product.Dl.js";
+import multer from 'multer';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Configure multer for image uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, '../public/product_images'));
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'product-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'));
+    }
+  }
+});
+
 class ProductBL {
+  static uploadMiddleware = upload.single('image');
+
   static async createProduct(req, res) {
     try {
-      const { name, price, description, imageUrl, inStock } = req.body;
+      const { name, price, description, category, inStock } = req.body;
 
-      if (!name || price === undefined || price === null || !description) {
+      if (!name || price === undefined || price === null || !category) {
         return res.status(400).json({
-          message: "name, price and description are required",
+          message: "name, price and category are required",
         });
       }
 
@@ -24,20 +59,26 @@ class ProductBL {
         });
       }
 
-      const newProduct = await ProductDL.createProduct({
+      const productData = {
         name,
-        price,
-        description,
-        imageUrl,
-        inStock,
-      });
+        price: parseFloat(price),
+        description: description || '',
+        category,
+        inStock: parseInt(inStock) || 0,
+      };
+
+      // If image was uploaded, set the imageUrl
+      if (req.file) {
+        productData.imageUrl = `/product_images/${req.file.filename}`;
+      }
+
+      const newProduct = await ProductDL.createProduct(productData);
 
       return res.status(201).json(newProduct);
     } catch (err) {
       console.error("Create product error:", err);
-      return res.status(501).json({
-        message: "Create product functionality not yet implemented",
-        endpoint: "POST /api/products",
+      return res.status(500).json({
+        message: err.message || "Error creating product",
       });
     }
   }
