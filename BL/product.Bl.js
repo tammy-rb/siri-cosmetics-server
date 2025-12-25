@@ -64,49 +64,54 @@ class ProductBL {
     }
   }
 
-  // Get all products with optional filters
-  static async getAllProducts(req, res) {
-    try {
-      
-      const { name, category, minPrice, maxPrice } = req.query;
+  // BL/product.Bl.js
+static async getAllProducts(req, res) {
+  try {
+    const { name, category, minPrice, maxPrice, q } = req.query;
 
-      const filter = {};
+    const filter = {};
 
-      // סינון לפי שם
-      if (name) {
-        filter.name = new RegExp(name, "i");
-      }
+    // Filter by name
+    if (name) {
+      filter.name = new RegExp(name, "i");
+    }
 
-      // סינון לפי קטגוריה
-      if (category) {
-        filter.category = new RegExp(category, "i");
-        // או התאמה מדויקת:
-        // filter.category = category;
-      }
+    // Filter by category (case-insensitive)
+    if (category) {
+      filter.category = new RegExp(category, "i");
+    }
 
-      if (minPrice || maxPrice) {
-        filter.price = {};
-        if (minPrice) filter.price.$gte = Number(minPrice);
-        if (maxPrice) filter.price.$lte = Number(maxPrice);
-      }
+    // Price range filter
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = Number(minPrice);
+      if (maxPrice) filter.price.$lte = Number(maxPrice);
+    }
 
-      const products = await ProductDL.getAllProducts(filter);
+    // Keyword search in name OR description
+    if (q) {
+      const keywordRegex = new RegExp(q, "i");
+      filter.$or = [
+        { name: keywordRegex },
+        { description: keywordRegex },
+      ];
+    }
 
-      return res.status(200).json({
-        message: "Get all products successfully",
-        endpoint: "GET /api/products",
-        availableFilters: ["name", "category", "price_range"],
-        filtersUsed: { name, category, minPrice, maxPrice },
-        count: products.length,
-        data: products,
-      });
+    const products = await ProductDL.getAllProducts(filter);
+
+    return res.status(200).json({
+      message: "Get all products successfully",
+      endpoint: "GET /api/products",
+      availableFilters: ["name", "category", "price_range", "q"],
+      filtersUsed: { name, category, minPrice, maxPrice, q },
+      count: products.length,
+      data: products,
+    });
     } catch (err) {
       console.error("Get all products error:", err);
-
       return res.status(500).json({
         message: "Error while getting products",
         endpoint: "GET /api/products",
-        availableFilters: ["name", "category", "price_range"],
         error: err.message,
       });
     }
