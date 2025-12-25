@@ -5,6 +5,8 @@ import dotenv from "dotenv";
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getAdminId } from "../BL/user.Bl.js";
+import jwt from "jsonwebtoken";
 
 dotenv.config();
 
@@ -149,15 +151,24 @@ export const authenticate = (req, res, next) => {
 };
 
 // middleware/authMiddleware.js
-import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
 
 export function authMiddleware(req, res, next) {
+
+    //if login or register route, skip auth
+    if (req.path === '/api/users/login' || req.path === '/api/users/register') {
+        return next();
+    }
     try {
      
     // הוצאת הטוקן בצורה בטוחה
     const authHeader = req.headers.authorization;
+    console.log("=== AUTH MIDDLEWARE DEBUG ===");
+    console.log("Request path:", req.path);
+    console.log("Authorization header:", authHeader);
+    console.log("All headers:", req.headers);
+    console.log("===========================");
     let token = null;
 
     // 1. ניסיון ראשון – מתוך Authorization: Bearer ...
@@ -178,7 +189,7 @@ export function authMiddleware(req, res, next) {
 
     // אימות הטוקן
     const payload = jwt.verify(token, JWT_SECRET);
-    console.log("Token verified successfully for user:", payload.userId);
+    console.log("Token verified successfully for user:", payload.userId, "in authentication middleware");
 
     req.userId = payload.userId;
     req.user = payload; // Add full payload to request
@@ -191,12 +202,12 @@ export function authMiddleware(req, res, next) {
 }
 
 // Authorization middleware to check for admin role or if getting own data
-export function authorizeAdminOrSelf(req, res, next) {
+export async function authorizeAdminOrSelf(req, res, next) {
     try {
-        const userRole = req.user.role;
         const userId = req.userId;
         const paramId = req.params.id;
-        if (userRole === 'admin' || userId === paramId) {
+        const adminId = await getAdminId();
+        if (userId === adminId || userId === paramId) {
             return next();
         } else {
             return res.status(403).json({ message: "Forbidden: Insufficient permissions" });
@@ -208,10 +219,11 @@ export function authorizeAdminOrSelf(req, res, next) {
 }
 
 // Authorization middleware to check for admin role only
-export function authorizeAdmin(req, res, next) {
+export async function authorizeAdmin(req, res, next) {
     try {
-        const userRole = req.user.role;
-        if (userRole === 'admin') {
+        const userId = req.userId;
+        const adminId = await getAdminId();
+        if (userId === adminId) {
             return next();
         } else {
             return res.status(403).json({ message: "Forbidden: Admins only" });
