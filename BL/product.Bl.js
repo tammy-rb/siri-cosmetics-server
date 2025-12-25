@@ -120,7 +120,7 @@ class ProductBL {
   // BL/product.Bl.js
 static async getAllProducts(req, res) {
   try {
-    const { name, category, minPrice, maxPrice, q } = req.query;
+    const { name, category, minPrice, maxPrice, keyword } = req.query;
 
     const filter = {};
 
@@ -142,8 +142,8 @@ static async getAllProducts(req, res) {
     }
 
     // Keyword search in name OR description
-    if (q) {
-      const keywordRegex = new RegExp(q, "i");
+    if (keyword) {
+      const keywordRegex = new RegExp(keyword, "i");
       filter.$or = [
         { name: keywordRegex },
         { description: keywordRegex },
@@ -155,8 +155,8 @@ static async getAllProducts(req, res) {
     return res.status(200).json({
       message: "Get all products successfully",
       endpoint: "GET /api/products",
-      availableFilters: ["name", "category", "price_range", "q"],
-      filtersUsed: { name, category, minPrice, maxPrice, q },
+      availableFilters: ["name", "category", "price_range", "keyword"],
+      filtersUsed: { name, category, minPrice, maxPrice, keyword },
       count: products.length,
       data: products,
     });
