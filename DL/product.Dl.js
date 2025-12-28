@@ -41,7 +41,7 @@ class ProductDL {
     static async removeProduct(id) {
         return await ProductDL.Product.findByIdAndDelete(id);
     }
-    
+
 }
 
 export default ProductDL;

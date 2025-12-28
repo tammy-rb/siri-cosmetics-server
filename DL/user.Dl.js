@@ -33,7 +33,7 @@ class UserDL {
         phone: String,
         address: String, // Keep for backward compatibility
         shippingAddresses: [UserDL.addressSchema],
-        cosmeticPreferences: UserDL.cosmeticPreferencesSchema 
+        cosmeticPreferences: UserDL.cosmeticPreferencesSchema
     }, { timestamps: true });
 
     static passwordSchema = new mongoose.Schema({
@@ -44,7 +44,7 @@ class UserDL {
 
     static User = mongoose.model("User", UserDL.userSchema); // creates "users" collection
     static Password = mongoose.model("Password", UserDL.passwordSchema); // creates "passwords" collection
-    
+
     // Create a new user in database
     static async createUser(userData, hash, salt) {
         const user = new UserDL.User(userData);
@@ -73,6 +73,7 @@ class UserDL {
         await UserDL.Password.deleteMany({ userId: id });
         return await UserDL.User.findByIdAndDelete(id);
     }
+
 }
 
 export default UserDL;

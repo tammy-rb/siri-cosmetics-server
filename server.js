@@ -1,8 +1,9 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
+import path from 'path';
 import cookieParser from 'cookie-parser';
-import { requestLogger, errorHandler } from './routesmiddlewear/middleware.js';
+import { requestLogger, errorHandler, authMiddleware } from './routesmiddlewear/middleware.js';
 import productRoutes from './routes/product.routes.js';
 import userRoutes from './routes/user.routes.js';
 import cartRoutes from './routes/cart.routes.js';
@@ -10,7 +11,10 @@ import appointmentRoutes from './routes/appointment.routes.js';
 import appointmentTypeRoutes from './routes/appointmentType.routes.js';
 import clinicScheduleRoutes from './routes/clinicSchedule.routes.js';
 import orderRoutes from './routes/order.routes.js';
+<<<<<<< HEAD
 
+=======
+>>>>>>> 6966bfa4d58a0e26066b569417c92df8660ccf95
 
 
 // Initialize express app
@@ -26,12 +30,8 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// Middleware to parse JSON bodies and URL-encoded data
-const jsonParser = bodyParser.json();
-const urlencodedParser = bodyParser.urlencoded({ extended: true });
-
-app.use(jsonParser);
-app.use(urlencodedParser);
+// Note: Don't use bodyParser globally when using multer for file uploads
+// Multer will handle parsing FormData, and other routes can use express.json()
 
 // Use cookie-parser middleware
 app.use(cookieParser()); 
@@ -39,6 +39,7 @@ app.use(cookieParser());
 // Use request logging middleware
 app.use(requestLogger);
 
+<<<<<<< HEAD
 // Use routes
 app.use('/api/products', productRoutes);
 app.use('/api/users', userRoutes);
@@ -48,6 +49,18 @@ app.use('/api/appointment-types', appointmentTypeRoutes);
 app.use('/api/clinic-schedule', clinicScheduleRoutes);
 app.use('/api/orders', orderRoutes);
 
+=======
+app.use(express.static(path.join(process.cwd(), "public")));
+
+// Use routes (routes will handle their own body parsing as needed)
+app.use('/api/products', express.json(), authMiddleware, productRoutes);
+app.use('/api/users', express.json(), authMiddleware, userRoutes);
+app.use('/api/cart', express.json(), authMiddleware, cartRoutes);
+app.use('/api/appointments', express.json(), authMiddleware, appointmentRoutes);
+app.use('/api/appointment-types', express.json(), authMiddleware, appointmentTypeRoutes);
+app.use('/api/clinic-schedule', express.json(), authMiddleware, clinicScheduleRoutes);
+app.use('/api/orders', authMiddleware, orderRoutes);
+>>>>>>> 6966bfa4d58a0e26066b569417c92df8660ccf95
 
 // Define homepage route for Siri Cosmetics
 app.get("/", (req, res) => {

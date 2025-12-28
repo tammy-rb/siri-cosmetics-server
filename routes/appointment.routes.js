@@ -1,6 +1,7 @@
 import express from "express";
 import AppointmentBL from "../BL/appointment.Bl.js";
 import ClinicScheduleBL from "../BL/clinicSchedule.Bl.js";
+import { authorizeAdmin } from "../routesmiddlewear/middleware.js";
 
 const router = express.Router();
 
@@ -17,7 +18,7 @@ router.get("/user/:userId", AppointmentBL.getAppointmentsByUser);
 router.patch("/:id/cancel", AppointmentBL.cancelAppointment);
 
 // Get all appointments (with optional filters via query params) - WORKING
-router.get("/", AppointmentBL.getAllAppointments);
+router.get("/", authorizeAdmin, AppointmentBL.getAllAppointments);
 
 // Get fully booked days for a given month and year - WORKING
 router.get("/fully-booked-days", AppointmentBL.getFullyBookedDays);

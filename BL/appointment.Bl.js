@@ -1,8 +1,8 @@
-// Business Logic for Appointment operations
+// BL/appointment.Bl.js
 import AppointmentDL from "../DL/appoitment.Dl.js";
 import AppointmentTypeDL from "../DL/appoitmentType.Dl.js";
-import mongoose, { get } from "mongoose";
-import { isTimeSlotBooked, isDayFullyBooked } from "./clinicSchedule.Bl.js";
+import mongoose from "mongoose";
+import { isTimeSlotAvailable, isDayFullyBooked } from "./clinicSchedule.Bl.js";
 
 class AppointmentBL {
   // Create a new appointment (book appointment)
@@ -37,12 +37,9 @@ class AppointmentBL {
 
       const duration = appointmentType.durationMinutes;
 
-
-
-      if (!await isTimeSlotBooked(appointmentDate, duration)) {
-        return res.status(400).json({
-          message: "This time slot is not available",
-        });
+      // Check if slot is available for this duration
+      if (!(await isTimeSlotAvailable(appointmentDate, duration))) {
+        return res.status(400).json({ message: "This time slot is not available" });
       }
 
       const newAppointment = await AppointmentDL.createAppointment({
@@ -95,18 +92,9 @@ class AppointmentBL {
       const { userId, status, appointmentTypeId, includeUsers } = req.query;
 
       const filter = {};
-
-      if (userId) {
-        filter.userId = userId;
-      }
-
-      if (status) {
-        filter.status = status;
-      }
-
-      if (appointmentTypeId) {
-        filter.appointmentTypeId = appointmentTypeId;
-      }
+      if (userId) filter.userId = userId;
+      if (status) filter.status = status;
+      if (appointmentTypeId) filter.appointmentTypeId = appointmentTypeId;
 
       const appointments = await AppointmentDL.getAllAppointments(filter, {
         includeUsers: includeUsers === "true",
@@ -138,8 +126,10 @@ class AppointmentBL {
       }
 
       const targetDate = new Date(date);
-      const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
-      const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
+      const startOfDay = new Date(targetDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(targetDate);
+      endOfDay.setHours(23, 59, 59, 999);
 
       const appointments = await AppointmentDL.getAllAppointments(
         {
@@ -195,10 +185,7 @@ class AppointmentBL {
         },
       };
 
-      // If userId is provided, filter by userId
-      if (userId) {
-        filter.userId = userId;
-      }
+      if (userId) filter.userId = userId;
 
       const appointments = await AppointmentDL.getAllAppointments(filter, {
         includeUsers: includeUsers === "true",
@@ -227,12 +214,8 @@ class AppointmentBL {
       const { includeUsers } = req.query;
 
       const appointments = await AppointmentDL.getAllAppointments(
-        {
-          userId: userId,
-        },
-        {
-          includeUsers: includeUsers === "true",
-        }
+        { userId },
+        { includeUsers: includeUsers === "true" }
       );
 
       return res.status(200).json({
@@ -250,7 +233,7 @@ class AppointmentBL {
     }
   }
 
-  //get fully booked days per month
+  // Get fully booked days per month
   static async getFullyBookedDays(req, res) {
     try {
       const { month, year } = req.query;
@@ -259,16 +242,17 @@ class AppointmentBL {
           message: "month and year are required",
         });
       }
+
       const fullyBookedDays = [];
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const daysInMonth = new Date(year, Number(month) + 1, 0).getDate();
+
+      // NOTE: still sequential. If this is slow, we can optimize later by batching.
       for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(year, month, day);
-        const isFullyBooked = await isDayFullyBooked(date);
-        if (isFullyBooked) {
-          console.log(`Day ${day} is fully booked`);
-          fullyBookedDays.push(day);
-        }
+        const fullyBooked = await isDayFullyBooked(date);
+        if (fullyBooked) fullyBookedDays.push(day);
       }
+
       return res.status(200).json({
         message: "Get fully booked days successfully",
         month,
@@ -299,7 +283,6 @@ class AppointmentBL {
           });
         }
 
-        // Check if new time slot is available
         const existingAppointment = await AppointmentDL.getAllAppointments({
           date: appointmentDate,
           status: { $in: ["scheduled", "confirmed"] },
@@ -313,10 +296,7 @@ class AppointmentBL {
         }
       }
 
-      const updatedAppointment = await AppointmentDL.updateAppointment(
-        id,
-        updates
-      );
+      const updatedAppointment = await AppointmentDL.updateAppointment(id, updates);
 
       if (!updatedAppointment) {
         return res.status(404).json({
@@ -386,7 +366,6 @@ class AppointmentBL {
       });
     }
   }
-
 }
 
 export default AppointmentBL;

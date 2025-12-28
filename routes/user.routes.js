@@ -19,6 +19,7 @@ router.post("/register", async (req, res, next) => {
 
         res.status(201).json({
             user: result.user,
+            token: result.token, // Also send token in response body
             message: "User registered and logged in successfully"
         });
     } catch (err) {
@@ -46,6 +47,7 @@ router.post("/login", async (req, res, next) => {
 
         res.json({
             user: result.user,
+            token: result.token, // Also send token in response body
             message: "Logged in successfully"
         });
     } catch (err) {

@@ -6,23 +6,23 @@ class ClinicSchduleDL {
         //timeSlots: [ {from:time, to:time}, ...]
         timeSlots: [{ from: String, to: String }],
     });
-    static ClinicSchdule = mongoose.model("ClinicSchdule", ClinicSchduleDL.clinicSchduleSchema); // creates "clinicschdules" collection
+    static ClinicSchdule = mongoose.models.ClinicSchdule || mongoose.model("ClinicSchdule", ClinicSchduleDL.clinicSchduleSchema); // creates "clinicschdules" collection
 
     static specialHoursSchema = new mongoose.Schema({
         date: { type: Date, required: true, unique: true },
         timeSlots: [{ from: String, to: String }],
         reason: { type: String }
     })
-    static SpecialHours = mongoose.model("SpecialHours", ClinicSchduleDL.specialHoursSchema); // creates "specialhours" collection
+    static SpecialHours = mongoose.models.SpecialHours || mongoose.model("SpecialHours", ClinicSchduleDL.specialHoursSchema); // creates "specialhours" collection
 
     static closedDaysSchema = new mongoose.Schema({
         date: { type: Date, required: true, unique: true },
         reason: { type: String }
     })
-    static ClosedDays = mongoose.model("ClosedDays", ClinicSchduleDL.closedDaysSchema); // creates "closeddays" collection
+    static ClosedDays = mongoose.models.ClosedDays || mongoose.model("ClosedDays", ClinicSchduleDL.closedDaysSchema); // creates "closeddays" collection
     
     //get all clinic schdules per month 
-    static async getClinicSchdule(month, year) {
+    static async getClinicSchduleForMonth(month, year) {
         const basic = await ClinicSchduleDL.ClinicSchdule.find({});
         //all special hours for the month
         const specialHours = await ClinicSchduleDL.SpecialHours.find({

@@ -2,8 +2,44 @@
 
 import fs from "fs";
 import dotenv from "dotenv";
+import multer from 'multer';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { getAdminId } from "../BL/user.Bl.js";
+import jwt from "jsonwebtoken";
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Configure multer for image uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, '../public/product_images'));
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'product-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'));
+    }
+  }
+});
+
+export const uploadMiddleware = upload.single('image');
 
 // Request logging middleware
 export const requestLogger = (req, res, next) => {
@@ -115,15 +151,24 @@ export const authenticate = (req, res, next) => {
 };
 
 // middleware/authMiddleware.js
-import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
 
 export function authMiddleware(req, res, next) {
+
+    //if login or register route, skip auth
+    if (req.path === '/api/users/login' || req.path === '/api/users/register') {
+        return next();
+    }
     try {
      
     // הוצאת הטוקן בצורה בטוחה
     const authHeader = req.headers.authorization;
+    console.log("=== AUTH MIDDLEWARE DEBUG ===");
+    console.log("Request path:", req.path);
+    console.log("Authorization header:", authHeader);
+    console.log("All headers:", req.headers);
+    console.log("===========================");
     let token = null;
 
     // 1. ניסיון ראשון – מתוך Authorization: Bearer ...
@@ -138,17 +183,53 @@ export function authMiddleware(req, res, next) {
 
     // 3. אם עדיין אין טוקן – אין גישה
     if (!token) {
+      console.log("No token found in request");
       return res.status(401).json({ message: "No token provided" });
     }
 
     // אימות הטוקן
     const payload = jwt.verify(token, JWT_SECRET);
+    console.log("Token verified successfully for user:", payload.userId, "in authentication middleware");
 
     req.userId = payload.userId;
+    req.user = payload; // Add full payload to request
     next();
   
     } catch (err) {
+        console.log("Token verification failed:", err.message);
         return res.status(401).json({ message: "Invalid or expired token" });
     }
 }
 
+// Authorization middleware to check for admin role or if getting own data
+export async function authorizeAdminOrSelf(req, res, next) {
+    try {
+        const userId = req.userId;
+        const paramId = req.params.id;
+        const adminId = await getAdminId();
+        if (userId === adminId || userId === paramId) {
+            return next();
+        } else {
+            return res.status(403).json({ message: "Forbidden: Insufficient permissions" });
+        }
+    } catch (err) {
+        console.error("Authorization error:", err);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+// Authorization middleware to check for admin role only
+export async function authorizeAdmin(req, res, next) {
+    try {
+        const userId = req.userId;
+        const adminId = await getAdminId();
+        if (userId === adminId) {
+            return next();
+        } else {
+            return res.status(403).json({ message: "Forbidden: Admins only" });
+        }
+    } catch (err) {
+        console.error("Authorization error:", err);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}

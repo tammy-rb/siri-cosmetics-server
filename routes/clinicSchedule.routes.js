@@ -1,5 +1,6 @@
 import express from "express";
 import ClinicScheduleBL from "../BL/clinicSchedule.Bl.js";
+import { authorizeAdmin } from "../routesmiddlewear/middleware.js";
 
 const router = express.Router();
 
@@ -13,21 +14,21 @@ router.get("/basic", ClinicScheduleBL.getBasicSchedule);
 router.get("/special-days", ClinicScheduleBL.getSpecialHoursAndClosedDays);
 
 // Update clinic schedule for a specific day of week
-router.put("/basic", ClinicScheduleBL.updateClinicSchedule);
+router.put("/basic", authorizeAdmin, ClinicScheduleBL.updateClinicSchedule);
 
 
 router.get("/available-slots", ClinicScheduleBL.getAvailableTimeSlots);
 
 // Add special hours for a specific date
-router.post("/special-hours", ClinicScheduleBL.addSpecialHours);
+router.post("/special-hours", authorizeAdmin, ClinicScheduleBL.addSpecialHours);
 
 // Delete special hours for a specific date
-router.delete("/special-hours/:date", ClinicScheduleBL.deleteSpecialHours);
+router.delete("/special-hours/:date", authorizeAdmin, ClinicScheduleBL.deleteSpecialHours);
 
 // Add closed day
-router.post("/closed-days", ClinicScheduleBL.addClosedDay);
+router.post("/closed-days", authorizeAdmin, ClinicScheduleBL.addClosedDay);
 
 // Delete closed day
-router.delete("/closed-days/:date", ClinicScheduleBL.deleteClosedDay);
+router.delete("/closed-days/:date", authorizeAdmin, ClinicScheduleBL.deleteClosedDay);
 
 export default router;

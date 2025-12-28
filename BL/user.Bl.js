@@ -99,4 +99,9 @@ class UserBL {
     }
 }
 
+export async function getAdminId() {
+    return await UserDL.getAllUsers({ name: "Siri Admin" }).then(users => users.length > 0 ? users[0]._id.toString() : null);
+}
+
+
 export default UserBL;
