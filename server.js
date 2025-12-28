@@ -9,6 +9,8 @@ import cartRoutes from './routes/cart.routes.js';
 import appointmentRoutes from './routes/appointment.routes.js';
 import appointmentTypeRoutes from './routes/appointmentType.routes.js';
 import clinicScheduleRoutes from './routes/clinicSchedule.routes.js';
+import orderRoutes from './routes/order.routes.js';
+
 
 
 // Initialize express app
@@ -44,6 +46,8 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/appointment-types', appointmentTypeRoutes);
 app.use('/api/clinic-schedule', clinicScheduleRoutes);
+app.use('/api/orders', orderRoutes);
+
 
 // Define homepage route for Siri Cosmetics
 app.get("/", (req, res) => {

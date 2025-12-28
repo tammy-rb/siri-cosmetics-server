@@ -72,7 +72,7 @@ class CartBL {
   // Clear entire cart for a user
   static async clearCart(req, res) {
     try {
-      const userId = req.params.userId || req.body.userId || (req.user && req.user.id);
+      const userId = req.userId ||req.params.userId || req.body.userId || (req.user && req.user.id);
 
       if (!userId) {
         return res.status(400).json({ message: "userId is required" });

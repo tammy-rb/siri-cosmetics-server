@@ -1,6 +1,8 @@
 // routes/order.routes.js
+import mongoose from "mongoose";
 import express from "express";
-import OrderBL from "../bl/OrderBL.js";
+import OrderBL from "../BL/order.Bl.js";
+import CartBL from "../BL/cart.Bl.js";
 import { authMiddleware } from "../routesmiddlewear/middleware.js"; // לפי הנתיב שלך
 
 const router = express.Router();
@@ -16,6 +18,8 @@ router.post("/checkout", authMiddleware, async (req, res, next) => {
       billingDetails,
     });
 
+    await CartBL.clearCart(req, res);
+
     res.status(201).json({
       order,
       message: "Order created successfully (payment pending)",
@@ -25,6 +29,71 @@ router.post("/checkout", authMiddleware, async (req, res, next) => {
     next(err);
   }
 });
+
+/**
+ * GET /api/orders/my
+ * הזמנות של המשתמש המחובר
+ */
+router.get("/my", authMiddleware, async (req, res, next) => {
+  try {
+    const orders = await OrderBL.getMyOrders(req.userId);
+    res.json({ count: orders.length, data: orders });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/orders/by-date?date=YYYY-MM-DD
+ * (למנהל/דוחות - אפשר לשמור מוגן)
+ */
+router.get("/by-date", authMiddleware, async (req, res, next) => {
+  try {
+    const { date } = req.query;
+    const orders = await OrderBL.getOrdersByDate(date);
+    res.json({ date, count: orders.length, data: orders });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/orders/:id
+ */
+router.get("/:id", authMiddleware, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid order id" });
+    }
+
+    const order = await OrderBL.getOrderById(id);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    res.json(order);
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+
+/**
+ * GET /api/orders
+ * כל ההזמנות (בפיתוח / אדמין)
+ */
+router.get("/", authMiddleware, async (req, res, next) => {
+  try {
+    const orders = await OrderBL.getAllOrders();
+    res.json({ count: orders.length, data: orders });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+
 
 
 
