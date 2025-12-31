@@ -2,7 +2,7 @@
 import AppointmentDL from "../DL/appoitment.Dl.js";
 import AppointmentTypeDL from "../DL/appoitmentType.Dl.js";
 import mongoose from "mongoose";
-import { isTimeSlotAvailable, isDayFullyBooked } from "./clinicSchedule.Bl.js";
+import { isTimeSlotBooked, isDayFullyBooked } from "./clinicSchedule.Bl.js";
 
 class AppointmentBL {
   // Create a new appointment (book appointment)
@@ -38,7 +38,7 @@ class AppointmentBL {
       const duration = appointmentType.durationMinutes;
 
       // Check if slot is available for this duration
-      if (!(await isTimeSlotAvailable(appointmentDate, duration))) {
+      if (await isTimeSlotBooked(appointmentDate, duration)) {
         return res.status(400).json({ message: "This time slot is not available" });
       }
 

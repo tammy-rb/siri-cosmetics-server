@@ -164,11 +164,6 @@ export function authMiddleware(req, res, next) {
      
     // הוצאת הטוקן בצורה בטוחה
     const authHeader = req.headers.authorization;
-    console.log("=== AUTH MIDDLEWARE DEBUG ===");
-    console.log("Request path:", req.path);
-    console.log("Authorization header:", authHeader);
-    console.log("All headers:", req.headers);
-    console.log("===========================");
     let token = null;
 
     // 1. ניסיון ראשון – מתוך Authorization: Bearer ...
@@ -189,8 +184,6 @@ export function authMiddleware(req, res, next) {
 
     // אימות הטוקן
     const payload = jwt.verify(token, JWT_SECRET);
-    console.log("Token verified successfully for user:", payload.userId, "in authentication middleware");
-
     req.userId = payload.userId;
     req.user = payload; // Add full payload to request
     next();
