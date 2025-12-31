@@ -12,7 +12,6 @@ import appointmentTypeRoutes from './routes/appointmentType.routes.js';
 import clinicScheduleRoutes from './routes/clinicSchedule.routes.js';
 import orderRoutes from './routes/order.routes.js';
 
-
 // Initialize express app
 const app = express();
 

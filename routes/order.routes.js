@@ -1,6 +1,8 @@
 // routes/order.routes.js
+import mongoose from "mongoose";
 import express from "express";
 import OrderBL from "../BL/order.Bl.js";
+import CartBL from "../BL/cart.Bl.js";
 import { authMiddleware } from "../routesmiddlewear/middleware.js"; // לפי הנתיב שלך
 
 const router = express.Router();
@@ -15,6 +17,8 @@ router.post("/checkout", authMiddleware, async (req, res, next) => {
       items,
       billingDetails,
     });
+
+    await CartBL.clearCart(req, res);
 
     res.status(201).json({
       order,
@@ -41,6 +45,9 @@ router.get("/", authMiddleware, async (req, res, next) => {
     next(err);
   }
 });
+
+
+
 
 
 

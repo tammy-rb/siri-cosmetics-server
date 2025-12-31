@@ -2,38 +2,55 @@
 import OrderDL from "../DL/order.Dl.js";
 
 class OrderBL {
-  static async createOrder({ userId, items, billingDetails }) {
-    if (!items || !items.length) {
-      throw new Error("Cart is empty");
-    }
-
-    // מחשבים סכום בצד שרת – לא סומכים על הלקוח
-    const totalAmount = items.reduce((sum, it) => {
-      const price = it.product?.price ?? it.price ?? 0;
-      const quantity = it.quantity ?? 1;
-      return sum + price * quantity;
-    }, 0);
-
-    const normalizedItems = items.map((it) => ({
-      productId: it.product?._id || it.productId || null,
-      name: it.product?.name || it.name || "",
-      price: it.product?.price ?? it.price ?? 0,
-      quantity: it.quantity ?? 1,
-    }));
-
-    const order = await OrderDL.createOrder({
-      userId: userId || null,
-      items: normalizedItems,
-      totalAmount,
-      billingDetails,
-      paymentMethod: "paypal",
-      paymentStatus: "pending",
-    });
-
-    return order;
+  static async createOrder({ userId, items, billingDetails, payment }) {
+  if (!items || !items.length) {
+    throw new Error("Cart is empty");
   }
 
-  static async getUserOrders(userId) {
+  const totalAmount = items.reduce((sum, it) => {
+    const price = it.price ?? it.product?.price ?? 0;
+    return sum + price * it.quantity;
+  }, 0);
+
+  // ✅ חיתוך 4 ספרות אחרונות בלבד
+  let cardLast4 = null;
+  if (payment?.cardNumber) {
+    const cardStr = String(payment.cardNumber).replace(/\s+/g, "");
+    cardLast4 = cardStr.slice(-4);
+  }
+
+  const order = await OrderDL.createOrder({
+  userId,
+  items,
+  totalAmount,
+  billingDetails,
+  payment: {
+    method: payment?.method || "credit_card",
+    status: "paid",
+    transactionId: payment?.transactionId || payment?.paymentRef || null,
+    last4: cardLast4, // חובה לפי הסכמה
+  },
+});
+
+  return order;
+}
+
+
+  static async getAllOrders(filters = {}) {
+    return await OrderDL.getAllOrders(filters);
+  }
+
+  static async getOrderById(id) {
+    return await OrderDL.getOrderById(id);
+  }
+
+  static async getOrdersByDate(dateString) {
+    const d = new Date(`${dateString}T00:00:00`);
+    if (isNaN(d.getTime())) throw new Error("Invalid date format (YYYY-MM-DD)");
+    return await OrderDL.getOrdersByDate(d);
+  }
+
+  static async getMyOrders(userId) {
     return await OrderDL.getOrdersByUser(userId);
   }
 }

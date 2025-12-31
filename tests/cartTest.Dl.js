@@ -10,14 +10,14 @@ import mongoose from 'mongoose';
 await connectDB();
 async function testCartDL() {
     // Create a new user for testing
-    const testUser = await UserDL.createUser({
+    /*const testUser = await UserDL.createUser({
         name: 'Test User',
         email: 'testuser@example.com',
         phone: '555-555-5555',
         address: '999 Test St, Testville, USA'
     }, 'testHash', 'testSalt');
     console.log('Created Test User:', testUser);
-    const userId = testUser._id;
+    const userId = testUser._id;*/
 
     // Get some existing products to add to the cart
     const products = await productDL.getAllProducts();
@@ -31,7 +31,8 @@ async function testCartDL() {
         { productId: products[1]._id, quantity: 1 },
         { productId: products[2]._id, quantity: 3 }
     ];
-    await CartDL.updateCart(userId, initialCartItems);
+    const userId = '6924b8d8208509fed6629b71';
+    await CartDL.updateCart(userId , initialCartItems);
     console.log('Initial cart created.');
     // Get the cart and total price
     let cart = await CartDL.getCartByUserId(userId);
@@ -49,8 +50,8 @@ async function testCartDL() {
     cart = await CartDL.getCartByUserId(userId);
     console.log('Cart after update:', cart);
     // Delete the user and their cart
-    await CartDL.deleteCartByUserId(userId);
-    await UserDL.removeUser(userId);
+    //await CartDL.deleteCartByUserId(userId);
+    //await UserDL.removeUser(userId);
     console.log('Test user and their cart deleted.');
 }
 
