@@ -43,7 +43,7 @@ app.use('/api/cart', express.json(), authMiddleware, cartRoutes);
 app.use('/api/appointments', express.json(), authMiddleware, appointmentRoutes);
 app.use('/api/appointment-types', express.json(), authMiddleware, appointmentTypeRoutes);
 app.use('/api/clinic-schedule', express.json(), authMiddleware, clinicScheduleRoutes);
-app.use('/api/orders', authMiddleware, orderRoutes);
+app.use('/api/orders', express.json(), authMiddleware, orderRoutes);
 
 // Define homepage route for Siri Cosmetics
 app.get("/", (req, res) => {

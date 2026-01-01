@@ -8,14 +8,17 @@ import { authMiddleware } from "../routesmiddlewear/middleware.js"; // לפי ה
 const router = express.Router();
 
 // יצירת הזמנה (checkout)
-router.post("/checkout", authMiddleware, async (req, res, next) => {
+router.post("/checkout", async (req, res, next) => {
   try {
-    const { items, billingDetails } = req.body;
+    console.log("Full req.body:", JSON.stringify(req.body, null, 2));
+    const { items, billingDetails, payment } = req.body;
+    console.log("payment extracted:", payment);
 
     const order = await OrderBL.createOrder({
       userId: req.userId, // מגיע מה־authMiddleware
       items,
       billingDetails,
+      payment: payment
     });
 
     await CartBL.clearCart(req, res);
