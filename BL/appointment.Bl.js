@@ -38,7 +38,7 @@ class AppointmentBL {
       const duration = appointmentType.durationMinutes;
 
       // Check if slot is available for this duration
-      if (await isTimeSlotBooked(appointmentDate, duration)) {
+      if (await isTimeSlotBooked(appointmentDate, duration, await AppointmentDL.getAllAppointments({ date: { $gte: new Date(appointmentDate.setHours(0,0,0,0)), $lt: new Date(appointmentDate.setHours(23,59,59,999)) } }))) {
         return res.status(400).json({ message: "This time slot is not available" });
       }
 

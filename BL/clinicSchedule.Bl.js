@@ -17,12 +17,13 @@ class ClinicScheduleBL {
                 return res.status(400).json({ message: "Invalid date format" });
             }
             const timeSlots = await getTimeSlotsForDate(day);
+            const appointmentsForDate = await AppointmentDL.getAllAppointments({ date: { $gte: new Date(day.setHours(0,0,0,0)), $lt: new Date(day.setHours(23,59,59,999)) } });
             // Filter out time slots that are booked
             timeSlots.filter(slot => {
                 const dateWithSlotTime = new Date(day);
                 const [hour, minute] = slot.from.split(':').map(Number);
                 dateWithSlotTime.setHours(hour, minute, 0, 0);
-                const isBooked = isTimeSlotBooked(dateWithSlotTime, 30); // assuming 30 minutes duration
+                const isBooked = isTimeSlotBooked(dateWithSlotTime, 15, appointmentsForDate); // assuming 15 minutes duration
                 return !isBooked;
             });
             if (!timeSlots.length) {
@@ -492,7 +493,7 @@ export async function isClinicOpen(date, durationMinutes) {
     }
     return false;
 }
-export async function isTimeSlotBooked(date, durationMinutes = 30) {
+export async function isTimeSlotBooked(date, durationMinutes = 30, appointmentsForDate = []) {
     if (!await isClinicOpen(date, durationMinutes)) {
         return false;
     }
@@ -501,19 +502,15 @@ export async function isTimeSlotBooked(date, durationMinutes = 30) {
     if (durationMinutes) {
         const start = new Date(appointmentDate);
         const end = new Date(appointmentDate.getTime() + durationMinutes * 60000);
-        existingAppointment = await AppointmentDL.getAllAppointments(
-            {
-                date: {
-                    $gte: start,
-                    $lte: end,
-                },
-                status: { $in: ["scheduled", "confirmed"] }
-            }
-        );
+        existingAppointment = appointmentsForDate.filter(app => {
+            const appStart = new Date(app.date);
+            const appEnd = new Date(appStart.getTime() + (app.durationMinutes || 30) * 60000);
+            return (appStart < end && appEnd > start) && ["scheduled", "confirmed"].includes(app.status);
+        });
     } else {
-        existingAppointment = await AppointmentDL.getAllAppointments({
-            date: appointmentDate,
-            status: { $in: ["scheduled", "confirmed"] },
+        existingAppointment = appointmentsForDate.filter(app => {
+            const appDate = new Date(app.date);
+            return appDate.getTime() === appointmentDate.getTime() && ["scheduled", "confirmed"].includes(app.status);
         });
     }
     return existingAppointment.length === 0;
@@ -531,11 +528,12 @@ export async function getEmptyTimeSlotsForDate(date) {
         return []; // Clinic is closed that day
     }
     const emptySlots = [];
+    const appointmentsForDate = await AppointmentDL.getAllAppointments({ date: { $gte: new Date(targetDate.setHours(0,0,0,0)), $lt: new Date(targetDate.setHours(23,59,59,999)) } });
     for (const slot of timeSlots) {
         const slotDate = new Date(targetDate);
         const [hour, minute] = slot.split(':').map(Number);
         slotDate.setHours(hour, minute, 0, 0);
-        if (!(await isTimeSlotBooked(slotDate))) {
+        if (!(await isTimeSlotBooked(slotDate, 15, appointmentsForDate))) {
             emptySlots.push(slot);
         }
     }
