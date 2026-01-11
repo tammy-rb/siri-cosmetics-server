@@ -493,10 +493,7 @@ export async function isClinicOpen(date, durationMinutes) {
     }
     return false;
 }
-export async function isTimeSlotBooked(date, durationMinutes = 30, appointmentsForDate = []) {
-    if (!await isClinicOpen(date, durationMinutes)) {
-        return false;
-    }
+export async function isTimeSlotBooked(date, durationMinutes = 15, appointmentsForDate = []) {
     const appointmentDate = new Date(date);
     let existingAppointment;
     if (durationMinutes) {
@@ -513,22 +510,32 @@ export async function isTimeSlotBooked(date, durationMinutes = 30, appointmentsF
             return appDate.getTime() === appointmentDate.getTime() && ["scheduled", "confirmed"].includes(app.status);
         });
     }
-    return existingAppointment.length === 0;
+    return existingAppointment.length > 0;
 }
 
 //calculate for a specific date if the clinic is fully booked
-export async function isDayFullyBooked(date) {
-    return (await getEmptyTimeSlotsForDate(date)).length === 0;
+export async function isDayFullyBooked(date, appointmentsForDate) {
+    return (await getEmptyTimeSlotsForDate(date, appointmentsForDate)).length === 0;
 }
 
-export async function getEmptyTimeSlotsForDate(date) {
+export async function getEmptyTimeSlotsForDate(date, appointmentsForDate = null) {
     const targetDate = new Date(date);
     const timeSlots = await getTimeSlotsForDate(targetDate);
     if (timeSlots.length === 0) {
         return []; // Clinic is closed that day
     }
     const emptySlots = [];
-    const appointmentsForDate = await AppointmentDL.getAllAppointments({ date: { $gte: new Date(targetDate.setHours(0,0,0,0)), $lt: new Date(targetDate.setHours(23,59,59,999)) } });
+    
+    // Fix: Create separate date objects to avoid mutation
+    const dayStart = new Date(targetDate);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(targetDate);
+    dayEnd.setHours(23, 59, 59, 999);
+    
+    appointmentsForDate = appointmentsForDate || await AppointmentDL.getAllAppointments({ 
+        date: { $gte: dayStart, $lt: dayEnd } 
+    });
+    
     for (const slot of timeSlots) {
         const slotDate = new Date(targetDate);
         const [hour, minute] = slot.split(':').map(Number);

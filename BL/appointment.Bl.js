@@ -2,12 +2,12 @@
 import AppointmentDL from "../DL/appoitment.Dl.js";
 import AppointmentTypeDL from "../DL/appoitmentType.Dl.js";
 import mongoose from "mongoose";
-import { isTimeSlotBooked, isDayFullyBooked } from "./clinicSchedule.Bl.js";
+import { isTimeSlotBooked, isDayFullyBooked, isClinicOpen } from "./clinicSchedule.Bl.js";
 
 class AppointmentBL {
   // Create a new appointment (book appointment)
   static async createAppointment(req, res) {
-    try {
+    try {     
       const { userId, appointmentTypeId, date, status, notes } = req.body;
 
       if (!userId || !appointmentTypeId || !date) {
@@ -38,7 +38,8 @@ class AppointmentBL {
       const duration = appointmentType.durationMinutes;
 
       // Check if slot is available for this duration
-      if (await isTimeSlotBooked(appointmentDate, duration, await AppointmentDL.getAllAppointments({ date: { $gte: new Date(appointmentDate.setHours(0,0,0,0)), $lt: new Date(appointmentDate.setHours(23,59,59,999)) } }))) {
+      if ( ! await isClinicOpen(appointmentDate, duration) || 
+      await isTimeSlotBooked(appointmentDate, duration, await AppointmentDL.getAllAppointments({ date: { $gte: new Date(appointmentDate.setHours(0,0,0,0)), $lt: new Date(appointmentDate.setHours(23,59,59,999)) } }))) {
         return res.status(400).json({ message: "This time slot is not available" });
       }
 
@@ -245,11 +246,18 @@ class AppointmentBL {
 
       const fullyBookedDays = [];
       const daysInMonth = new Date(year, Number(month) + 1, 0).getDate();
+      const appointmentsInMonth = await AppointmentDL.getAllAppointments({
+        date: {
+          $gte: new Date(year, month, 1),
+          $lt: new Date(year, Number(month) + 1, 1),
+        },
+      });
 
-      // NOTE: still sequential. If this is slow, we can optimize later by batching.
       for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(year, month, day);
-        const fullyBooked = await isDayFullyBooked(date);
+        const fullyBooked = await isDayFullyBooked(date, appointmentsInMonth.filter(app => {
+          return app.date.getDate() === day;
+        }));
         if (fullyBooked) fullyBookedDays.push(day);
       }
 
