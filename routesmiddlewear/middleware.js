@@ -157,8 +157,8 @@ const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
 export function authMiddleware(req, res, next) {
 
     //if login or register route, skip auth
-    if (req.path === '/api/users/login' || req.path === '/api/users/register') {
-        return next();
+    if (req.path.includes('login') || req.path.includes('register')) {
+      return next();
     }
     try {
      
